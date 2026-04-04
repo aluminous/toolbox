@@ -1,0 +1,26 @@
+[package]
+name = "pdf-rearrange"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+leptos = { version = "0.8", features = ["csr"] }
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+web-sys = { version = "0.3", features = [
+    "console",
+    "DataTransfer", "DataTransferItemList", "DataTransferItem", "DragEvent",
+    "File", "FileList", "FileReader",
+    "Blob", "BlobPropertyBag", "Url",
+    "HtmlCanvasElement", "HtmlElement", "HtmlInputElement",
+    "Element", "Document", "Window",
+    "MouseEvent", "Event", "EventTarget",
+] }
+lopdf = { version = "0.40", default-features = false, features = ["wasm_js"] }
+uuid = { version = "1", features = ["v4", "js"] }
+console_error_panic_hook = "0.1"
+
+[profile.release]
+opt-level = "z"
+lto = true

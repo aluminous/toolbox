@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Rearrange</title>
+  <link data-trunk rel="css" href="style.css" />
+  <link data-trunk rel="rust" />
+
+  <!-- PDF.js for thumbnail rendering -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    // Called from Rust after a canvas is mounted.
+    // bytes: Uint8Array of the full PDF, canvasId: DOM id, pageNum: 1-based
+    window.renderPdfPage = async function(bytes, canvasId, pageNum) {
+      try {
+        const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+        const page = await pdf.getPage(pageNum);
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const viewport = page.getViewport({ scale: 0.35 });
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+      } catch(e) {
+        console.error('renderPdfPage error:', e);
+      }
+    };
+  </script>
+</head>
+<body></body>
+</html>

@@ -1,0 +1,196 @@
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: system-ui, sans-serif;
+  background: #f0f2f5;
+  color: #333;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+}
+
+/* Toolbar */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #1a1a2e;
+  color: white;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.toolbar h1 {
+  font-size: 1.1rem;
+  margin-right: 8px;
+}
+
+.btn {
+  padding: 6px 14px;
+  border: 1px solid #555;
+  border-radius: 4px;
+  background: #2d2d44;
+  color: white;
+  cursor: pointer;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.btn:hover { background: #3d3d5c; }
+
+.btn-primary {
+  background: #4a90d9;
+  border-color: #357abd;
+}
+
+.btn-primary:hover { background: #357abd; }
+
+/* Main layout */
+.panels {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  gap: 0;
+}
+
+.panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: white;
+  border-right: 1px solid #ddd;
+}
+
+.panel:last-child { border-right: none; }
+
+.panel h2 {
+  padding: 10px 14px 4px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #555;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  flex-shrink: 0;
+}
+
+.hint {
+  padding: 0 14px 8px;
+  font-size: 0.75rem;
+  color: #999;
+  flex-shrink: 0;
+}
+
+/* Page grid — scrollable */
+.page-grid {
+  flex: 1;
+  overflow-y: auto;
+  padding: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 8px;
+}
+
+.output-panel.drag-over .page-grid {
+  background: #e8f4ff;
+}
+
+/* Individual page card */
+.page-card {
+  position: relative;
+  width: 120px;
+  border: 2px solid #ddd;
+  border-radius: 6px;
+  background: #fafafa;
+  cursor: pointer;
+  user-select: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  overflow: hidden;
+}
+
+.page-card:hover {
+  border-color: #aaa;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.page-card.selected {
+  border-color: #4a90d9;
+  box-shadow: 0 0 0 2px rgba(74,144,217,0.3);
+  background: #f0f7ff;
+}
+
+.page-card canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  background: white;
+}
+
+.page-label {
+  display: block;
+  padding: 3px 4px;
+  font-size: 0.65rem;
+  color: #666;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Checkbox — always visible for mobile */
+.page-checkbox {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  z-index: 1;
+  accent-color: #4a90d9;
+}
+
+/* Remove button on output cards */
+.remove-btn {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  width: 18px;
+  height: 18px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.4);
+  color: white;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.page-card:hover .remove-btn { opacity: 1; }
+
+/* Drag-over highlight for output panel */
+.output-panel.drag-over {
+  background: #e8f4ff;
+}
+
+/* Empty state message */
+.empty-msg {
+  color: #bbb;
+  font-size: 0.85rem;
+  padding: 24px;
+  text-align: center;
+  width: 100%;
+}
