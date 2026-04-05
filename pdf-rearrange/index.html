@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PDF Rearrange</title>
+  <link rel="stylesheet" href="/toolbox/pdf-rearrange/style-826c6b439a2a0918.css" integrity="sha384-RauWvrDw9aa3nkQONo8KyMBCe5DqQcITV+vv8ibR8tM3lEGiUu69PSoAHZxbqVNK"/>
+  
+<script type="module">
+import init, * as bindings from '/toolbox/pdf-rearrange/pdf-rearrange-6b8aa951a6c10b61.js';
+const wasm = await init({ module_or_path: '/toolbox/pdf-rearrange/pdf-rearrange-6b8aa951a6c10b61_bg.wasm' });
+
+
+window.wasmBindings = bindings;
+
+
+dispatchEvent(new CustomEvent("TrunkApplicationStarted", {detail: {wasm}}));
+
+</script>
+
+  <!-- PDF.js for thumbnail rendering -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc =
+      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+    // Called from Rust after a canvas is mounted.
+    // bytes: Uint8Array of the full PDF, canvasId: DOM id, pageNum: 1-based
+    window.renderPdfPage = async function(bytes, canvasId, pageNum) {
+      try {
+        const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+        const page = await pdf.getPage(pageNum);
+        const canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        const viewport = page.getViewport({ scale: 0.35 });
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+      } catch(e) {
+        console.error('renderPdfPage error:', e);
+      }
+    };
+  </script>
+<link rel="modulepreload" href="/toolbox/pdf-rearrange/pdf-rearrange-6b8aa951a6c10b61.js" crossorigin="anonymous" integrity="sha384-cL5J/yEm3EWg2FWYC5qTNMI9jpdHteuEM9Qzf7ElkOlNyrf3uQDp9l96P93a2K44"><link rel="preload" href="/toolbox/pdf-rearrange/pdf-rearrange-6b8aa951a6c10b61_bg.wasm" crossorigin="anonymous" integrity="sha384-wqO3ebHbc67YQpuxR1DkINIuQoby/rnoJtF1YUSeU3lBABg8qvD6Xnx5PMXXg3vi" as="fetch" type="application/wasm"></head>
+<body></body>
+</html>
