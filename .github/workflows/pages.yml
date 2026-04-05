@@ -3,7 +3,6 @@ name: Deploy pdf-rearrange to GitHub Pages
 on:
   push:
     branches: [main]
-    paths: ["pdf-rearrange/**", ".github/workflows/pages.yml"]
   workflow_dispatch:
 
 permissions:
