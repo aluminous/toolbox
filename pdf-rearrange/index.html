@@ -7,8 +7,73 @@
   <link data-trunk rel="css" href="style.css" />
   <link data-trunk rel="rust" />
 
-  <!-- Touch drag-and-drop polyfill (maps touchstart/move/end → drag events) -->
-  <script src="https://unpkg.com/drag-drop-touch@1.0.2/DragDropTouch.js"></script>
+  <!-- Touch drag-and-drop polyfill: maps touchstart/move/end → drag events -->
+  <script>
+  (function() {
+    var drag = null; // { el, dt, lastOver }
+
+    function FakeDataTransfer() {
+      this._store = {};
+      this.effectAllowed = 'all';
+      this.dropEffect = 'move';
+      this.types = [];
+    }
+    FakeDataTransfer.prototype.setData = function(type, val) {
+      this._store[type] = val;
+      if (!this.types.includes(type)) this.types.push(type);
+    };
+    FakeDataTransfer.prototype.getData = function(type) {
+      return this._store[type] != null ? this._store[type] : '';
+    };
+
+    function mkEvent(type, t, dt) {
+      var e = new DragEvent(type, {
+        bubbles: true, cancelable: true,
+        clientX: t.clientX, clientY: t.clientY,
+        screenX: t.screenX, screenY: t.screenY
+      });
+      Object.defineProperty(e, 'dataTransfer', { value: dt, configurable: true });
+      return e;
+    }
+
+    function pt(e) { return e.touches[0] || e.changedTouches[0]; }
+
+    document.addEventListener('touchstart', function(e) {
+      var el = e.target;
+      while (el && el !== document.body) {
+        if (el.getAttribute('draggable') === 'true') {
+          drag = { el: el, dt: new FakeDataTransfer(), lastOver: null };
+          el.dispatchEvent(mkEvent('dragstart', pt(e), drag.dt));
+          return;
+        }
+        el = el.parentElement;
+      }
+    }, { passive: false });
+
+    document.addEventListener('touchmove', function(e) {
+      if (!drag) return;
+      e.preventDefault();
+      var t = pt(e);
+      var target = document.elementFromPoint(t.clientX, t.clientY);
+      if (!target) return;
+      if (target !== drag.lastOver) {
+        if (drag.lastOver) drag.lastOver.dispatchEvent(mkEvent('dragleave', t, drag.dt));
+        drag.lastOver = target;
+        target.dispatchEvent(mkEvent('dragenter', t, drag.dt));
+      }
+      target.dispatchEvent(mkEvent('dragover', t, drag.dt));
+    }, { passive: false });
+
+    document.addEventListener('touchend', function(e) {
+      if (!drag) return;
+      var t = pt(e);
+      var target = document.elementFromPoint(t.clientX, t.clientY) || drag.lastOver;
+      if (target) target.dispatchEvent(mkEvent('drop', t, drag.dt));
+      drag.el.dispatchEvent(mkEvent('dragend', t, drag.dt));
+      drag = null;
+    }, { passive: false });
+  })();
+  </script>
 
   <!-- PDF.js for thumbnail rendering -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
