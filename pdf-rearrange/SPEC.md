@@ -28,8 +28,9 @@ A single-page web application for rearranging and concatenating PDF pages. All p
 ## Page Selection
 
 - Any number of source pages may be selected simultaneously.
-- **Desktop**: clicking a page selects it exclusively; Ctrl/Cmd+click toggles a page in or out of the selection; Shift+click extends the selection to a range.
-- **Mobile**: a checkbox is always visible on each thumbnail and toggles that page's selection.
+- Clicking or tapping a page toggles its selection without affecting other selected pages.
+- Shift+click extends the selection to a contiguous range from the last selected page.
+- A "Select All" button selects all source pages at once.
 - Selected pages are visually distinguished from unselected pages.
 
 ---
@@ -38,14 +39,16 @@ A single-page web application for rearranging and concatenating PDF pages. All p
 
 - A separate output panel holds the pages that will form the saved PDF.
 - Pages are added to the output panel by:
-  - Dragging individual thumbnails from the source panel and dropping them into the output panel.
-  - Clicking "Add Selected" to append all currently selected source pages to the output panel in their displayed order.
+  - Dragging a thumbnail from the source panel and dropping it into the output panel.
+  - Dragging any one of several selected source pages moves all selected pages together, in source order.
+  - Clicking "Add Selected" to append all currently selected source pages in their displayed order.
 - The same source page may be added to the output panel more than once.
 - Pages from different source PDFs may be mixed freely.
 - Pages in the output panel may be reordered by dragging.
+- While dragging, the page thumbnail is shown as the drag image.
 - Individual pages may be removed from the output panel.
 - The output panel may be fully cleared.
-- Drag interactions work on both desktop (mouse) and mobile (touch).
+- Drag interactions work on both desktop (mouse) and mobile (touch); on touch, a floating preview follows the finger.
 
 ---
 

@@ -145,18 +145,6 @@ body {
   white-space: nowrap;
 }
 
-/* Checkbox — always visible for mobile */
-.page-checkbox {
-  position: absolute;
-  top: 4px;
-  left: 4px;
-  width: 16px;
-  height: 16px;
-  cursor: pointer;
-  z-index: 1;
-  accent-color: #4a90d9;
-}
-
 /* Remove button on output cards */
 .remove-btn {
   position: absolute;

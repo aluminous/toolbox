@@ -99,9 +99,7 @@ fn PageCard(
     page: PdfPage,
     /// Whether this card shows a "selected" highlight
     selected: Signal<bool>,
-    /// Called when the checkbox is toggled (always toggles)
-    on_check: Callback<()>,
-    /// Called when the card body is clicked (receives MouseEvent for modifier detection)
+    /// Called when the card is clicked (receives MouseEvent for modifier detection)
     on_card_click: Callback<MouseEvent>,
     /// If Some, show a remove button calling this callback
     #[prop(optional)]
@@ -170,15 +168,6 @@ fn PageCard(
                 }
             }
         >
-            <input
-                type="checkbox"
-                class="page-checkbox"
-                prop:checked=selected
-                on:click=move |e: MouseEvent| {
-                    e.stop_propagation();
-                    on_check.run(());
-                }
-            />
             <canvas id=canvas_id />
             <span class="page-label">{label}</span>
             {on_remove.map(|rm| view! {
@@ -228,6 +217,15 @@ fn App() -> impl IntoView {
     };
 
     // ── Toolbar actions ───────────────────────────────────────────────────────
+
+    let on_select_all = move |_| {
+        let ids: HashSet<String> = input_pages
+            .get_untracked()
+            .iter()
+            .map(|p| p.id.clone())
+            .collect();
+        selected_ids.set(ids);
+    };
 
     let on_add_selected = move |_| {
         let ids = selected_ids.get_untracked();
@@ -298,6 +296,7 @@ fn App() -> impl IntoView {
                     <input type="file" multiple=true accept=".pdf"
                         style="display:none" on:change=on_file_input />
                 </label>
+                <button class="btn" on:click=on_select_all>"Select All"</button>
                 <button class="btn" on:click=on_add_selected>
                     "Add Selected →"
                 </button>
@@ -311,7 +310,7 @@ fn App() -> impl IntoView {
                 <section class="panel">
                     <h2>"Source Pages"</h2>
                     <div class="hint">
-                        "Drop PDFs anywhere · ctrl/shift+click to multi-select"
+                        "Drop PDFs anywhere · click to select · shift+click to range select"
                     </div>
                     <div class="page-grid">
                         <For
@@ -342,27 +341,15 @@ fn App() -> impl IntoView {
                                     <PageCard
                                         page=page
                                         selected=is_selected
-                                        on_check=Callback::new(move |_| {
-                                            let id = pid.get_value();
-                                            selected_ids.update(|s| {
-                                                if s.contains(&id) { s.remove(&id); }
-                                                else { s.insert(id); }
-                                            });
-                                        })
                                         on_card_click=Callback::new(move |e: MouseEvent| {
                                             let id = pid.get_value();
                                             if e.shift_key() {
                                                 range_select(id, input_pages, selected_ids, last_selected);
-                                            } else if e.ctrl_key() || e.meta_key() {
+                                            } else {
                                                 selected_ids.update(|s| {
                                                     if s.contains(&id) { s.remove(&id); }
                                                     else { s.insert(id.clone()); }
                                                 });
-                                                last_selected.set(Some(id));
-                                            } else {
-                                                let already = selected_ids.get_untracked().len() == 1
-                                                    && selected_ids.get_untracked().contains(&id);
-                                                selected_ids.update(|s| { s.clear(); if !already { s.insert(id.clone()); }});
                                                 last_selected.set(Some(id));
                                             }
                                         })
@@ -398,7 +385,6 @@ fn App() -> impl IntoView {
                                     <PageCard
                                         page=page
                                         selected=Signal::derive(|| false)
-                                        on_check=Callback::new(|_| {})
                                         on_card_click=Callback::new(|_| {})
                                         on_remove=Callback::new(move |_| {
                                             let id = pid.get_value();
