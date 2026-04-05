@@ -11,6 +11,7 @@
   <script>
   (function() {
     var drag = null; // { el, dt, lastOver }
+    var dragClone = null;
 
     function FakeDataTransfer() {
       this._store = {};
@@ -42,8 +43,29 @@
       var el = e.target;
       while (el && el !== document.body) {
         if (el.getAttribute('draggable') === 'true') {
+          var t = pt(e);
           drag = { el: el, dt: new FakeDataTransfer(), lastOver: null };
-          el.dispatchEvent(mkEvent('dragstart', pt(e), drag.dt));
+          el.dispatchEvent(mkEvent('dragstart', t, drag.dt));
+
+          // Create a floating visual clone that follows the finger
+          dragClone = el.cloneNode(true);
+          dragClone.style.cssText =
+            'position:fixed;pointer-events:none;opacity:0.85;z-index:9999;' +
+            'transform:scale(0.9);transform-origin:top left;';
+          // Copy canvas pixel data (cloneNode doesn't copy canvas content)
+          var srcCanvas = el.querySelector('canvas');
+          var dstCanvas = dragClone.querySelector('canvas');
+          if (srcCanvas && dstCanvas) {
+            dstCanvas.width = srcCanvas.width;
+            dstCanvas.height = srcCanvas.height;
+            dstCanvas.getContext('2d').drawImage(srcCanvas, 0, 0);
+          }
+          var r = el.getBoundingClientRect();
+          dragClone.style.width  = r.width  + 'px';
+          dragClone.style.height = r.height + 'px';
+          dragClone.style.left = (t.clientX - r.width  / 2) + 'px';
+          dragClone.style.top  = (t.clientY - r.height / 2) + 'px';
+          document.body.appendChild(dragClone);
           return;
         }
         el = el.parentElement;
@@ -54,6 +76,15 @@
       if (!drag) return;
       e.preventDefault();
       var t = pt(e);
+
+      // Move the floating clone
+      if (dragClone) {
+        var w = parseFloat(dragClone.style.width);
+        var h = parseFloat(dragClone.style.height);
+        dragClone.style.left = (t.clientX - w / 2) + 'px';
+        dragClone.style.top  = (t.clientY - h / 2) + 'px';
+      }
+
       var target = document.elementFromPoint(t.clientX, t.clientY);
       if (!target) return;
       if (target !== drag.lastOver) {
@@ -71,6 +102,9 @@
       if (target) target.dispatchEvent(mkEvent('drop', t, drag.dt));
       drag.el.dispatchEvent(mkEvent('dragend', t, drag.dt));
       drag = null;
+
+      // Remove floating clone
+      if (dragClone) { document.body.removeChild(dragClone); dragClone = null; }
     }, { passive: false });
   })();
   </script>

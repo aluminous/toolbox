@@ -111,8 +111,13 @@ fn PageCard(
     /// If Some, update this signal with this card's id when dragged over (for drop-before)
     #[prop(optional)]
     drop_signal: Option<RwSignal<Option<String>>>,
+    /// If Some, called on dragstart to produce the drag data string (overrides default).
+    /// Use this to implement multi-select drag.
+    #[prop(optional)]
+    drag_data_fn: Option<Callback<(), String>>,
 ) -> impl IntoView {
     let canvas_id = format!("canvas-{}", page.id);
+    let canvas_id_drag = canvas_id.clone(); // captured by dragstart closure
     let bytes = Arc::clone(&page.pdf_bytes);
     let page_num = page.page_num;
     let label = format!("{} p.{}", page.filename, page.page_num);
@@ -137,7 +142,25 @@ fn PageCard(
             on:click=move |e: MouseEvent| on_card_click.run(e)
             on:dragstart=move |e: DragEvent| {
                 if let Some(dt) = e.data_transfer() {
-                    let _ = dt.set_data("text/plain", &drag_id);
+                    let data = if let Some(f) = drag_data_fn {
+                        f.run(())
+                    } else {
+                        drag_id.clone()
+                    };
+                    let _ = dt.set_data("text/plain", &data);
+                    // Use the rendered thumbnail as the drag ghost image
+                    if let Some(el) = web_sys::window()
+                        .and_then(|w| w.document())
+                        .and_then(|d| d.get_element_by_id(&canvas_id_drag))
+                    {
+                        use wasm_bindgen::JsCast;
+                        let canvas = el.unchecked_ref::<web_sys::HtmlCanvasElement>();
+                        let _ = dt.set_drag_image(
+                            canvas,
+                            (canvas.width() / 2) as i32,
+                            (canvas.height() / 2) as i32,
+                        );
+                    }
                 }
             }
             on:dragover=move |e: DragEvent| {
@@ -299,6 +322,22 @@ fn App() -> impl IntoView {
                                 let is_selected = Signal::derive(move ||
                                     selected_ids.get().contains(pid.get_value().as_str())
                                 );
+                                let drag_fn = Callback::new(move |_: ()| {
+                                    let ids = selected_ids.get_untracked();
+                                    let my_id = pid.get_value();
+                                    if ids.contains(&my_id) && ids.len() > 1 {
+                                        let ordered = input_pages
+                                            .get_untracked()
+                                            .iter()
+                                            .filter(|p| ids.contains(&p.id))
+                                            .map(|p| p.id.clone())
+                                            .collect::<Vec<_>>()
+                                            .join("|");
+                                        format!("in-multi:{}", ordered)
+                                    } else {
+                                        format!("in:{}", my_id)
+                                    }
+                                });
                                 view! {
                                     <PageCard
                                         page=page
@@ -328,6 +367,7 @@ fn App() -> impl IntoView {
                                             }
                                         })
                                         drag_prefix="in"
+                                        drag_data_fn=drag_fn
                                     />
                                 }
                             }
@@ -426,6 +466,28 @@ fn handle_drop(
     input_pages: RwSignal<Vec<PdfPage>>,
     output_pages: RwSignal<Vec<PdfPage>>,
 ) {
+    if let Some(ids_str) = data.strip_prefix("in-multi:") {
+        let ids: Vec<&str> = ids_str.split('|').collect();
+        let pages_to_add: Vec<PdfPage> = input_pages
+            .get_untracked()
+            .into_iter()
+            .filter(|p| ids.contains(&p.id.as_str()))
+            .map(|p| PdfPage { id: uuid::Uuid::new_v4().to_string(), ..p })
+            .collect();
+        output_pages.update(|v| {
+            if let Some(bid) = &before_id {
+                if let Some(idx) = v.iter().position(|p| &p.id == bid) {
+                    for (i, p) in pages_to_add.into_iter().enumerate() {
+                        v.insert(idx + i, p);
+                    }
+                    return;
+                }
+            }
+            v.extend(pages_to_add);
+        });
+        return;
+    }
+
     let page = if let Some(src_id) = data.strip_prefix("in:") {
         // From input panel — clone the page with a fresh id so the same
         // source page can appear multiple times in output
