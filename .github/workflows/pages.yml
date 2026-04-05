@@ -1,4 +1,4 @@
-name: Deploy pdf-rearrange to GitHub Pages
+name: Deploy to GitHub Pages
 
 on:
   push:
@@ -40,14 +40,20 @@ jobs:
         with:
           version: latest
 
-      - name: Build
+      - name: Build pdf-rearrange
         working-directory: pdf-rearrange
         run: trunk build --release --public-url /toolbox/pdf-rearrange/
+
+      - name: Stage site
+        run: |
+          mkdir -p _site/pdf-rearrange
+          cp index.html _site/index.html
+          cp -r pdf-rearrange/dist/. _site/pdf-rearrange/
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: pdf-rearrange/dist
+          path: _site
 
   deploy:
     needs: build

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Toolbox</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: system-ui, sans-serif;
+      background: #f0f2f5;
+      color: #222;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 60px 20px;
+    }
+    h1 { font-size: 2rem; margin-bottom: 8px; }
+    .subtitle { color: #666; margin-bottom: 48px; }
+    .tools {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 16px;
+      width: 100%;
+      max-width: 800px;
+    }
+    .tool {
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 10px;
+      padding: 24px;
+      text-decoration: none;
+      color: inherit;
+      transition: box-shadow 0.15s, transform 0.15s;
+    }
+    .tool:hover {
+      box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+      transform: translateY(-2px);
+    }
+    .tool-icon { font-size: 2rem; margin-bottom: 12px; }
+    .tool-name { font-size: 1.1rem; font-weight: 600; margin-bottom: 6px; }
+    .tool-desc { font-size: 0.875rem; color: #666; line-height: 1.4; }
+  </style>
+</head>
+<body>
+  <h1>Toolbox</h1>
+  <p class="subtitle">Small useful tools, running entirely in your browser.</p>
+  <div class="tools">
+    <a class="tool" href="pdf-rearrange/">
+      <div class="tool-icon">📄</div>
+      <div class="tool-name">PDF Rearrange</div>
+      <div class="tool-desc">Drag and drop pages to reorder or concatenate PDFs. Nothing leaves your device.</div>
+    </a>
+  </div>
+</body>
+</html>
