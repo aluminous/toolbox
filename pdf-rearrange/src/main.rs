@@ -99,8 +99,8 @@ fn PageCard(
     page: PdfPage,
     /// Whether this card shows a "selected" highlight
     selected: Signal<bool>,
-    /// Called when the card is clicked (receives MouseEvent for modifier detection)
-    on_card_click: Callback<MouseEvent>,
+    #[prop(optional)]
+    on_card_click: Option<Callback<MouseEvent>>,
     /// If Some, show a remove button calling this callback
     #[prop(optional)]
     on_remove: Option<Callback<()>>,
@@ -115,7 +115,7 @@ fn PageCard(
     drag_data_fn: Option<Callback<(), String>>,
 ) -> impl IntoView {
     let canvas_id = format!("canvas-{}", page.id);
-    let canvas_id_drag = canvas_id.clone(); // captured by dragstart closure
+    let canvas_id_drag = canvas_id.clone();
     let bytes = Arc::clone(&page.pdf_bytes);
     let page_num = page.page_num;
     let label = format!("{} p.{}", page.filename, page.page_num);
@@ -137,7 +137,7 @@ fn PageCard(
             class="page-card"
             class:selected=selected
             draggable="true"
-            on:click=move |e: MouseEvent| on_card_click.run(e)
+            on:click=move |e: MouseEvent| { if let Some(f) = on_card_click { f.run(e); } }
             on:dragstart=move |e: DragEvent| {
                 if let Some(dt) = e.data_transfer() {
                     let data = if let Some(f) = drag_data_fn {
@@ -385,7 +385,6 @@ fn App() -> impl IntoView {
                                     <PageCard
                                         page=page
                                         selected=Signal::derive(|| false)
-                                        on_card_click=Callback::new(|_| {})
                                         on_remove=Callback::new(move |_| {
                                             let id = pid.get_value();
                                             output_pages.update(|v| v.retain(|p| p.id != id));
@@ -445,6 +444,20 @@ fn range_select(
     last_selected.set(Some(id));
 }
 
+fn insert_pages(output_pages: RwSignal<Vec<PdfPage>>, pages: Vec<PdfPage>, before_id: &Option<String>) {
+    output_pages.update(|v| {
+        if let Some(bid) = before_id {
+            if let Some(idx) = v.iter().position(|p| &p.id == bid) {
+                for (i, p) in pages.into_iter().enumerate() {
+                    v.insert(idx + i, p);
+                }
+                return;
+            }
+        }
+        v.extend(pages);
+    });
+}
+
 /// Process a drop event: parse drag data, find the page, insert it into output.
 fn handle_drop(
     data: &str,
@@ -453,30 +466,19 @@ fn handle_drop(
     output_pages: RwSignal<Vec<PdfPage>>,
 ) {
     if let Some(ids_str) = data.strip_prefix("in-multi:") {
-        let ids: Vec<&str> = ids_str.split('|').collect();
-        let pages_to_add: Vec<PdfPage> = input_pages
+        let ids: HashSet<&str> = ids_str.split('|').collect();
+        let pages = input_pages
             .get_untracked()
             .into_iter()
-            .filter(|p| ids.contains(&p.id.as_str()))
+            .filter(|p| ids.contains(p.id.as_str()))
             .map(|p| PdfPage { id: uuid::Uuid::new_v4().to_string(), ..p })
             .collect();
-        output_pages.update(|v| {
-            if let Some(bid) = &before_id {
-                if let Some(idx) = v.iter().position(|p| &p.id == bid) {
-                    for (i, p) in pages_to_add.into_iter().enumerate() {
-                        v.insert(idx + i, p);
-                    }
-                    return;
-                }
-            }
-            v.extend(pages_to_add);
-        });
+        insert_pages(output_pages, pages, &before_id);
         return;
     }
 
     let page = if let Some(src_id) = data.strip_prefix("in:") {
-        // From input panel — clone the page with a fresh id so the same
-        // source page can appear multiple times in output
+        // Clone with a fresh id so the same source page can appear multiple times in output
         input_pages
             .get_untracked()
             .iter()
@@ -497,15 +499,7 @@ fn handle_drop(
     };
 
     if let Some(page) = page {
-        output_pages.update(|v| {
-            if let Some(bid) = &before_id {
-                if let Some(idx) = v.iter().position(|p| &p.id == bid) {
-                    v.insert(idx, page);
-                    return;
-                }
-            }
-            v.push(page);
-        });
+        insert_pages(output_pages, vec![page], &before_id);
     }
 }
 

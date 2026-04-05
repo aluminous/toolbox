@@ -61,6 +61,8 @@
             dstCanvas.getContext('2d').drawImage(srcCanvas, 0, 0);
           }
           var r = el.getBoundingClientRect();
+          drag.cloneW = r.width;
+          drag.cloneH = r.height;
           dragClone.style.width  = r.width  + 'px';
           dragClone.style.height = r.height + 'px';
           dragClone.style.left = (t.clientX - r.width  / 2) + 'px';
@@ -77,12 +79,9 @@
       e.preventDefault();
       var t = pt(e);
 
-      // Move the floating clone
       if (dragClone) {
-        var w = parseFloat(dragClone.style.width);
-        var h = parseFloat(dragClone.style.height);
-        dragClone.style.left = (t.clientX - w / 2) + 'px';
-        dragClone.style.top  = (t.clientY - h / 2) + 'px';
+        dragClone.style.left = (t.clientX - drag.cloneW / 2) + 'px';
+        dragClone.style.top  = (t.clientY - drag.cloneH / 2) + 'px';
       }
 
       var target = document.elementFromPoint(t.clientX, t.clientY);
